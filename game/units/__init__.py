@@ -1,4 +1,2 @@
-from .flyers import *
-from .infantry import *
-from .shooters import *
-from base_units import *
+from game.units.specific_units import *
+from .base_units import *
