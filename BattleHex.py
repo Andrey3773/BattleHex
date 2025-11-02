@@ -2,22 +2,25 @@ from game.units.unit_factory import UnitFactory
 from game.field.position import Position
 from game.field.buttle_field import BattleField
 
-pikeman = UnitFactory.create('pikeman', Position(1)) #TODO хардкод мерзость имени, хочется исправить
+pikeman = UnitFactory.create('pikeman', Position(0)) #TODO хардкод мерзость имени, хочется исправить
+archer = UnitFactory.create('archer', Position(14))
 
-print(UnitFactory.get_registered_units())
+battlefield = BattleField(16)
 
-print(f"имя: {pikeman.name}\n"
-      f"скорость: {pikeman.speed}\n"
-      f"здоровье: {pikeman.health}\n"
-      f"{str(pikeman.position)}")
-
-battlefield = BattleField(8)
 battlefield.add_unit(pikeman)
-battlefield.move_unit(pikeman, Position(3))
-pikeman2 = UnitFactory.create('pikeman', Position(1))
-battlefield.add_unit(pikeman2)
-print(battlefield)
-battlefield.move_unit(pikeman, Position(7))
-print(battlefield)
-battlefield.remove_unit(pikeman2)
-print(battlefield)
+battlefield.add_unit(archer)
+
+while pikeman.alive and archer.alive:
+    if not pikeman.can_attack(archer, battlefield):
+        battlefield.move_unit(pikeman, pikeman.position + pikeman.speed)
+    else:
+        pikeman.attack(archer, battlefield)
+
+    print(battlefield, '\n')
+
+    if archer.can_attack(pikeman, battlefield):
+        archer.attack(pikeman, battlefield)
+    else:
+        battlefield.move_unit(archer, archer.position - archer.speed)
+
+    print(battlefield, '\n')

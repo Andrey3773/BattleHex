@@ -8,6 +8,15 @@ class Position:
         self.x = x
         self.y = y
 
+
+    def __add__(self, other: int):
+        return Position(self.x + other, self.y)
+
+
+    def __sub__(self, other):
+        return Position(self.x - other, self.y)
+
+
     def __str__(self):
         return f"({self.x}, {self.y})"
 
