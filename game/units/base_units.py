@@ -10,6 +10,14 @@ if TYPE_CHECKING:
 
 
 class Unit(ABC):
+    """
+    Базовый класс всех юнитов.
+    Загружает все данные из json, реализует основные возможности юнитов:
+        - атаковать
+        - умирать
+    * передвижение юнитов реализовано в классе ButtleField
+    """
+
     def __init__(self, unit_data: dict, position: Position):
         self.name = unit_data["name"]
         self.type = unit_data["type"]
@@ -29,12 +37,29 @@ class Unit(ABC):
 
 
     def die(self, battlefield: 'BattleField'):
+        """
+        Функция реализует смерть юнита.
+            - На всякий случай проверяет здоровье юнита и приравнивает его к нулю
+            - Делает влаг жизни юниита равным False (теперь юнит мертв)
+            - Удаляет юнита с поля
+
+        :param battlefield:
+        :return:
+        """
+
         self.alive = False
-        self.health = 0
+        if self.health != 0:
+            self.health = 0
         battlefield.remove_unit(self)
 
 
     def _calculate_damage_to_target(self, target: 'Unit'):
+        """
+        Рассчитывает урон, который юнит нанесет врагу с учетом их характеристик
+        :param target:
+        :return:
+        """
+
         base_damage = randint(self.damage_min, self.damage_max)
         attack_defense_difference = self.attack_value - target.defense
         damage = base_damage * (
@@ -45,6 +70,13 @@ class Unit(ABC):
 
 
     def can_attack(self, target: 'Unit', battlefield: 'BattleField'):
+        """
+        Проверяет, может ли юнит атаковать другого с учетом их позиций на поле битвы
+        :param target:
+        :param battlefield:
+        :return:
+        """
+
         if not self.alive or not target.alive:
             return False
 
@@ -53,6 +85,16 @@ class Unit(ABC):
 
 
     def attack(self, target: 'Unit', battlefield: 'BattleField'):
+        """
+        Реализует атаку на врага.
+            - проверяет возможность атаки на врага
+            - наносит врагу урон, уменьшая его здоровье
+            - убивает врага при помощи .die(), если урона достаточно для убийства
+        :param target:
+        :param battlefield:
+        :return:
+        """
+
         if not self.can_attack(target, battlefield):
             return 0
 
@@ -72,11 +114,24 @@ class Unit(ABC):
 
 
 class Infantry(Unit):
+    """
+    Базовый класс для всех пехотинцев.
+    Могут ходить только по земле и атаковать лишь на соседнюю клетку
+
+    В будущем не смогут преодолевать препятствия и ходить сквозь других юнитов
+    В этом заключается отличие между пехотой и летунами, для чего и нужны отдельные классы
+    """
+
     def __init__(self, unit_data: Dict, position: Position):
         super().__init__(unit_data, position)
 
 
 class Shooter(Unit):
+    """
+    Базовый класс для всех юнитов, способных атаковать на расстоянии (стрелять)
+    В случае, если закончился боезапас, действуют, как пехотинцы, но со штрафом к урону
+    """
+
     def __init__(self, unit_data: Dict, position: Position):
         super().__init__(unit_data, position)
         self.ammo = unit_data.get("ammo", 10)
@@ -85,6 +140,16 @@ class Shooter(Unit):
 
 
     def can_attack(self, target: 'Unit', battlefield: 'BattleField'):
+        """
+        Более сложная функция проверки возможности атаки на врага, чем в базовом классе
+            - проверяет боезапас
+            - проверяет дальность стрельбы
+
+        :param target:
+        :param battlefield:
+        :return:
+        """
+
         if not self.alive or not target.alive:
             return False
 
@@ -100,6 +165,18 @@ class Shooter(Unit):
 
 
     def attack(self, target: 'Unit', battlefield: 'BattleField'):
+        """
+        Более сложная функция атаки, чем в базовом классе.
+            - Если может стрелять, то стреляет и наносит полный урон
+            - Если не может стрелять (закончился боезапас или стоит вплотную к другому юниту), то бьет со штрафом
+            TODO на данный момент может атаковать дальнего юнита, если стоит вплотную к другому.
+            TODO надо добавить флаг, что любое из соседних полей занято
+
+        :param target:
+        :param battlefield:
+        :return:
+        """
+
         if not self.can_attack(target, battlefield):
             return 0
 
@@ -129,4 +206,4 @@ class Shooter(Unit):
 #     def __init__(self, unit_data: Dict, position: Position):
 #         super().__init__(unit_data, position)
 #         self.can_fly_over_obstacles = True
-#TODO было принято решение пока что положить ХУЙ на летучих
+#TODO было принято решение пока что положить хуй на летучих и отладить все остальное

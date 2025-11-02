@@ -87,4 +87,3 @@ class UnitFactory:
 
         key_name = sub(r'(?<!^)(?=[A-Z])', '_', class_name).lower()
         return key_name
-
