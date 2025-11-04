@@ -1,11 +1,15 @@
-from typing import List, Dict, Any, TYPE_CHECKING
-from game.field.position import Position
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from game.field.battle_field import BattleField
     from game.units.base_units import Unit
 
 class Renderer:
+    """
+    Класс консольного рендерера
+
+    Умеет получать всякие данные от других объектов и выплевывает их интерпретацию в консоль
+    """
 
     def __init__(self, battlefield: 'BattleField'):
         self.battlefield = battlefield
@@ -14,6 +18,7 @@ class Renderer:
     def render_start_info(self, unit_left: 'Unit', unit_right: 'Unit'):
         """
         Выводит стартовую информацию о бое.
+
         Статы юнитов и их стартовую позицию на поле
         :return:
         """
@@ -45,6 +50,7 @@ class Renderer:
     def render_battlefield(self):
         """
         Выводит поле каждый ход (с указанием хода)
+
         Также выводит hp bar юнитов
         :return:
         """
@@ -61,7 +67,7 @@ class Renderer:
     @staticmethod
     def render_unit_action(action: str, unit: 'Unit', target: 'Unit'=None, damage: int=None, distance: int=None):
         """
-        Выводит
+        Выводит действие юнита
         :return:
         """
 
@@ -74,7 +80,7 @@ class Renderer:
     @staticmethod
     def render_hp_bars(unit: 'Unit', length=10):
         """
-        Генерирует hp bar для здоровья юнитов
+        Выводит hp bar для юнитов
         :return:
         """
 
@@ -91,4 +97,9 @@ class Renderer:
 
     @staticmethod
     def render_turns_separator():
+        """
+        Выводит разделитель ходов
+        :return:
+        """
+
         print('-' * 50)

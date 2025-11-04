@@ -12,6 +12,13 @@ if TYPE_CHECKING:
 
 
 class BattleManager:
+    """
+    Класс менеджера битвы
+
+    Умеет запускать и полностью обрабатывать автоматический бой 1 на 1 на одномерной карте.
+    Примитивный ИИ умеет просто бить, когда бьется
+    """
+
     def __init__(self, battlefield: 'BattleField'):
         self.battlefield = battlefield
         self.renderer = Renderer(self.battlefield)
@@ -22,6 +29,16 @@ class BattleManager:
 
 
     def run(self, *units):
+        """
+        Основной геймлуп.
+            - Добавляет поданных юнитов на поле
+            - Ходит за каждого юнита
+            - Атакует за каждого юнита
+            - Отсылает данные в рендер
+        :param units:
+        :return:
+        """
+
         for unit in units:
             self._add_unit(unit)
 
@@ -43,15 +60,30 @@ class BattleManager:
 
 
     def get_game_state(self):
+        """
+        Концептуально должна мочь послать все данные о бое в рендер, но пока просто молча существует
+        :return:
+        """
         pass
 
 
     def _add_unit(self, unit: 'Unit'):
+        """
+        Добавляет юнита на поле (простит поле битвы добавить юнита через self.battlefield.add_unit())
+        :param unit:
+        :return:
+        """
+
         self.battlefield.add_unit(unit)
         self.units_in_game.append(unit)
 
 
     def _process_full_turn(self):
+        """
+        Обрабатывает один полный ход (ход за каждого юнита)
+        :return:
+        """
+
         alive_units = self._get_alive_units()
         sorted_units = sorted(alive_units, key=lambda unit: unit.speed, reverse=True)
         for unit_turned in sorted_units:
@@ -61,8 +93,14 @@ class BattleManager:
 
 
     def _process_unit_turn(self, unit: 'Unit'):
+        """
+        С позволения сказать ИИ, который решает, что делать юниту в зависимости от ситуации на поле.
 
-        # TODO юнит не подходит вплотную, а останавливается в другом месте, надо подумать над логикой
+        Теоретически умеет обрабатывать бои не только 1 на 1, но тестов не проходила и скорее всего сдохнет.
+        Хотя по идее оно будет работать, как просто "каждый сам за себя"
+        :param unit:
+        :return:
+        """
 
         # находим всех врагов
         enemies = [enemy for enemy in self.units_in_game if enemy.alive and enemy != unit]
@@ -109,6 +147,11 @@ class BattleManager:
 
 
     def _check_victory(self):
+        """
+        Проверяет, не случилась ли победы и, как следствие - конец игры
+        :return:
+        """
+
         alive_units = self._get_alive_units()
         alive_unit_quantity = len(alive_units)
         if alive_unit_quantity == 1:
@@ -120,4 +163,9 @@ class BattleManager:
 
 
     def _get_alive_units(self):
+        """
+        Добывает список всех живых юнитов на поле
+        :return:
+        """
+
         return [unit for unit in self.units_in_game if unit.alive]

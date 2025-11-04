@@ -2,6 +2,11 @@ import logging
 
 
 class Logger:
+    """
+    Класс логгера
+
+    На данный момент в зачаточном состоянии, умеет приблизительно ничего интересного (и не используется)
+    """
 
     def __init__(self, name=__name__, level=logging.INFO):
         logging.basicConfig(
@@ -34,6 +39,12 @@ class Logger:
 
 
 class Formatter(logging.Formatter):
+    """
+    Класс кастомного форматера
+
+    Умеет преобразовывать сообщение из логгера в красивый вид
+    """
+
     def format(self, record):
         total_width = 50
         around_dash_place = 5
