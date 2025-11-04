@@ -1,12 +1,16 @@
 from random import randint
 from numpy import sign
 from abc import ABC
-from typing import Dict, TYPE_CHECKING
+from typing import Dict, TYPE_CHECKING, Optional
 from game.field.position import Position
+# from core.logging.logger import Logger
+
+
+# logger = Logger(__name__)
 
 
 if TYPE_CHECKING:
-    from game.field.buttle_field import BattleField
+    from game.field.battle_field import BattleField
 
 
 class Unit(ABC):
@@ -66,21 +70,25 @@ class Unit(ABC):
                 (1 + 0.05 * sign(attack_defense_difference))
                 ** min(abs(attack_defense_difference), 20)
         )
+        # TODO возможно стоит вынести эту формулу в какой-то конфиг или типа того
         return max(int(1), int(damage))
 
 
-    def can_attack(self, target: 'Unit', battlefield: 'BattleField'):
+    def can_attack(self, target: 'Unit', battlefield: 'BattleField', new_position: 'Position'=None):
         """
         Проверяет, может ли юнит атаковать другого с учетом их позиций на поле битвы
         :param target:
         :param battlefield:
+        :param new_position:
         :return:
         """
+
+        position = new_position if new_position else self.position
 
         if not self.alive or not target.alive:
             return False
 
-        distance = battlefield.get_distance(self.position, target.position)
+        distance = battlefield.get_distance(position, target.position)
         return distance <= self.range
 
 
@@ -100,13 +108,28 @@ class Unit(ABC):
 
         damage = self._calculate_damage_to_target(target)
         target.health -= damage
-        print(f"Юнит {self.name} атакует юнита {target.name} и наносит {damage} урона")
+        # logger.info(f"Юнит {self.name} атакует юнита {target.name} и наносит {damage} урона")
 
         if target.health <= 0:
-            print(f"Юнит {target.name} умирает")
+            # logger.info(f"Юнит {target.name} умирает")
             target.die(battlefield)
 
         return damage
+
+
+    def find_attack_position(self, target: 'Unit', battlefield: 'BattleField') -> Optional[Position]:
+        """Находит ближайшую позицию, с которой можно атаковать врага"""
+        enemy_pos = target.position
+
+        for distance in range(1, self.range + 1):
+            for direction in [-1, 1]:
+                test_position = Position(enemy_pos.x + distance * direction)
+                if (battlefield.is_position_available(test_position) and
+                        self.can_attack(target, battlefield, test_position) and
+                        battlefield.get_distance(test_position, self.position) <= self.speed):
+                    return test_position
+
+        return None
 
 
     def __str__(self):
@@ -139,7 +162,7 @@ class Shooter(Unit):
         self.melee_penalty = unit_data.get("melee_penalty", 0.6)
 
 
-    def can_attack(self, target: 'Unit', battlefield: 'BattleField'):
+    def can_attack(self, target: 'Unit', battlefield: 'BattleField', new_position: 'Position'=None):
         """
         Более сложная функция проверки возможности атаки на врага, чем в базовом классе
             - проверяет боезапас
@@ -147,13 +170,16 @@ class Shooter(Unit):
 
         :param target:
         :param battlefield:
+        :param new_position:
         :return:
         """
+
+        position = new_position if new_position else self.position
 
         if not self.alive or not target.alive:
             return False
 
-        distance = battlefield.get_distance(self.position, target.position)
+        distance = battlefield.get_distance(position, target.position)
 
         if distance <= self.range and self.ammo > 0:
             return True
@@ -193,9 +219,10 @@ class Shooter(Unit):
 
         real_damage = max(1, real_damage)
         target.health -= real_damage
-        print(f"Юнит {self.name} атакует юнита {target.name} и наносит {real_damage} урона")
+        # TODO вот здесь ниже происходит самоповтор. хз, можно ли этого избежать каким-то образом
+        # logger.info(f"Юнит {self.name} атакует юнита {target.name} и наносит {real_damage} урона")
         if target.health <= 0:
-            print(f"Юнит {target.name} умирает")
+            # logger.info(f"Юнит {target.name} умирает")
             target.die(battlefield)
 
         return real_damage

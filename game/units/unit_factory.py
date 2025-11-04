@@ -18,6 +18,19 @@ class UnitFactory:
     # Словарь, в котором хранятся все существующие классы по ключам из JSON
     _unit_list: Dict[str, Type[Unit]] = {}
 
+    # Данные обо всех юнитах загружаются один раз при инициализации
+    _unit_data_cache: Dict[str, dict] = {}
+    _data_loaded = False
+
+
+    @classmethod
+    def preload_data(cls):
+        if not cls._data_loaded:
+            for unit_name in cls._unit_list:
+                cls._unit_data_cache[unit_name] = load_unit_data(unit_name)
+            cls._data_loaded = True
+
+
     @classmethod
     def register(cls, unit_class: Type[Unit]) -> Type[Unit]:
         """
@@ -51,14 +64,17 @@ class UnitFactory:
         :return: unit_class
         """
 
-        unit_data = load_unit_data(unit_name=unit_name)
+        if not cls._data_loaded:
+            cls.preload_data()
+
+        unit_data = cls._unit_data_cache[unit_name]
 
         if unit_name not in cls._unit_list:
-            available_unts = list(cls._unit_list)
+            available_units = list(cls._unit_list)
             raise ValueError(
-                f'Юнит {unit_name} не зарегистрирован в фабрике.'
-                f'Убедитесь, что юнит зарегистрирован при помощи декоратора @UnitFactory.register'
-                f'Доступные юниты: {available_unts}'
+                f'Юнит {unit_name} не зарегистрирован в фабрике.\n'
+                f'Убедитесь, что юнит зарегистрирован при помощи декоратора @UnitFactory.register\n'
+                f'Доступные юниты: {available_units}'
             )
         unit_class: Type['Unit'] = cls._unit_list[unit_name]
 

@@ -1,6 +1,10 @@
 from typing import List, Optional, Dict, TYPE_CHECKING
 from game.field.position import Position
 from utils.data_functions import load_field_data
+# from core.logging.logger import Logger
+
+
+# logger = Logger(__name__)
 
 
 if TYPE_CHECKING:
@@ -87,7 +91,7 @@ class BattleField:
             if self._is_valid_position(unit.position):
                 self.cells[unit.position.x] = unit
                 self._unit_positions[unit] = unit.position
-                print(f"Юнит {unit.name} добавлен на поле")
+                # logger.info(f"Юнит {unit.name} добавлен на поле")
             else:
                 raise ValueError('Указанные координаты превышают размеры поля')
         else:
@@ -106,7 +110,7 @@ class BattleField:
             unit_position = self._unit_positions[unit]
             self.cells[unit_position.x] = None
             self._unit_positions.pop(unit)
-            print(f"Юнит {unit.name} убран с поля")
+            # logger.info(f"Юнит {unit.name} убран с поля")
 
 
     def get_unit_at(self, position: Position) -> Optional['Unit']:
@@ -142,9 +146,8 @@ class BattleField:
                 self.cells[new_position.x] = unit
                 self._unit_positions[unit] = new_position
                 unit.position = new_position
-                print(f"Юнит {unit.name} передвинут на {self.get_distance(old_position, new_position)}")
-            else:
-                raise ValueError('невозможно переместить юнита на эту позицию')
+                return self.get_distance(old_position, new_position)
+        return None
 
 
     @staticmethod
@@ -159,19 +162,3 @@ class BattleField:
         """
 
         return abs(position1.x - position2.x)
-
-
-    def __str__(self):
-        """
-        Преобразует поле в строку для более удобного вывода в консоль
-        :return:
-        """
-
-        string_field = "|"
-        for i in range(self.size):
-            unit = self.cells[i]
-            if unit is None:
-                string_field += (self.icon + "|")
-            else:
-                string_field += (unit.icon + "|")
-        return string_field

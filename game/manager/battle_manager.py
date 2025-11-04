@@ -1,14 +1,20 @@
 from typing import TYPE_CHECKING, List, Optional
+from core.logging.logger import Logger
+from core.rendering.renderer import Renderer
+
+
+logger = Logger(__name__)
 
 
 if TYPE_CHECKING:
-    from game.field.buttle_field import BattleField
+    from game.field.battle_field import BattleField
     from game.units.base_units import Unit
 
 
 class BattleManager:
     def __init__(self, battlefield: 'BattleField'):
         self.battlefield = battlefield
+        self.renderer = Renderer(self.battlefield)
         self.units_in_game: List['Unit'] = []
         self.current_turn = 0
         self.game_over = False
@@ -18,15 +24,22 @@ class BattleManager:
     def run(self, *units):
         for unit in units:
             self._add_unit(unit)
-        print('-' * 50 + '\n')
-        while not self.game_over:
-            self._process_full_turn()
-            self.current_turn += 1
-            print(f"Ход {self.current_turn} завершён")
-            print(self.battlefield, '\n')
-            print('-' * 50 + '\n')
 
-        print(f"🎉 Победитель: {self.winner}!")
+        # TODO
+        # надо каким-то образом исправить это дело, потому что на данный момент я никак не проверяю,
+        # какой юнит слева, а какой справа
+        self.renderer.render_start_info(self.units_in_game[0], self.units_in_game[-1])
+
+        while not self.game_over:
+            self.current_turn += 1
+            self.renderer.render_turn_number(self.current_turn)
+            self._process_full_turn()
+            self.renderer.render_battlefield()
+            for unit in self.units_in_game:
+                self.renderer.render_hp_bars(unit)
+            self.renderer.render_turns_separator()
+
+        self.renderer.render_end_info(self.winner)
 
 
     def get_game_state(self):
@@ -51,29 +64,48 @@ class BattleManager:
 
         # TODO юнит не подходит вплотную, а останавливается в другом месте, надо подумать над логикой
 
+        # находим всех врагов
         enemies = [enemy for enemy in self.units_in_game if enemy.alive and enemy != unit]
         if not enemies:
             return
 
+        # находим ближайшего врага
         nearest_enemy = min(enemies, key=lambda e: self.battlefield.get_distance(unit.position, e.position))
 
+
+        # атакуем врага, если можем с текущей позиции
         if unit.can_attack(nearest_enemy, self.battlefield):
-            unit.attack(nearest_enemy, self.battlefield)
+            damage = unit.attack(nearest_enemy, self.battlefield)
+            self.renderer.render_unit_action('attack', unit=unit, target=nearest_enemy, damage=damage)
             return
 
+
+        # пытаемся найти позицию, с которой можно атаковать
+        attack_position = unit.find_attack_position(nearest_enemy, self.battlefield)
+
+
+        # если атакующая позиция найдена, двигаемся на нее
+        if attack_position:
+            # Двигаемся к атакующей позиции
+            self.battlefield.move_unit(unit, attack_position)
+            return
+
+
+        # Если не смогли найти атакующую позицию, просто двигаемся в сторону врага
         direction = unit.position.direction_to(nearest_enemy.position)
 
         new_position = unit.position + (direction * unit.speed)
 
         if not (self.battlefield.is_position_available(new_position)):
-            for steps in range(unit.speed, 0, -1):
+            for steps in range(unit.speed, -1, -1):
                 new_position = unit.position + (direction * steps)
                 if self.battlefield.is_position_available(new_position):
                     break
             else:
                 return
 
-        self.battlefield.move_unit(unit, new_position)
+        distance = self.battlefield.move_unit(unit, new_position)
+        self.renderer.render_unit_action('move', unit=unit, distance=distance)
 
 
     def _check_victory(self):
@@ -81,7 +113,7 @@ class BattleManager:
         alive_unit_quantity = len(alive_units)
         if alive_unit_quantity == 1:
             self.game_over = True
-            self.winner = alive_units[0].name
+            self.winner = alive_units[0]
             return True
         else:
             return False

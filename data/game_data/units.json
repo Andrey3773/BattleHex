@@ -19,7 +19,7 @@
     "damage_min": 1,
     "damage_max": 4,
     "speed": 3,
-    "range": 5,
+    "range": 25,
     "ammo": 10,
     "icon": "\uD83C\uDFF9"
   }

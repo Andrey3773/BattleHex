@@ -1,14 +1,26 @@
-from game.units.unit_factory import UnitFactory
-from game.field.position import Position
-from game.field.buttle_field import BattleField
-from game.manager.battle_manager import BattleManager
+def main():
+    from core.logging.logger import Logger
 
-pikeman = UnitFactory.create('pikeman', Position(0)) #TODO хардкод-мерзость имени, хочется исправить
-archer = UnitFactory.create('archer', Position(13))
-
-battlefield = BattleField(16)
+    # logger = Logger(__name__)
 
 
-battle = BattleManager(battlefield)
+    from game.units.unit_factory import UnitFactory
+    from game.field.position import Position
+    from game.field.battle_field import BattleField
+    from game.manager.battle_manager import BattleManager
 
-battle.run(pikeman, archer)
+    pikeman = UnitFactory.create('pikeman', Position(0)) #TODO хардкод-мерзость имени, хочется исправить
+    archer = UnitFactory.create('archer', Position(24))
+    # logger.info('юниты созданы')
+
+    battlefield = BattleField(25)
+    # logger.info('поле создано')
+
+
+    battle = BattleManager(battlefield)
+
+    battle.run(pikeman, archer)
+
+
+if __name__ == "__main__":
+    main()
